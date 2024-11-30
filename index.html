@@ -111,6 +111,12 @@
   <h1>币本位与U本位滚仓收益计算器</h1>
   
   <form id="calculatorForm">
+    <label for="mode">选择计算模式:</label>
+    <select id="mode">
+      <option value="usdt">U本位 (USD)</option>
+      <option value="crypto">币本位</option>
+    </select>
+
     <label for="currency">选择币种: </label>
     <select id="currency" onchange="fetchCurrentPrice()">
       <option value="bitcoin">BTC</option>
@@ -135,12 +141,6 @@
 
     <label for="rollingPrices">滚仓价格区间 (可选，逗号分隔): </label>
     <input type="text" id="rollingPrices" placeholder="例如: 10000,20000,30000">
-
-    <label for="mode">计算模式:</label>
-    <select id="mode">
-      <option value="usdt">U本位 (USD)</option>
-      <option value="crypto">币本位</option>
-    </select>
 
     <button type="button" onclick="calculate()">计算收益</button>
   </form>
@@ -232,7 +232,6 @@
       return 10000;
     }
 
-    function getNextStep(price
     function getNextStep(price) {
       const step = getStep(price);
       return Math.ceil(price / step) * step;
@@ -258,6 +257,7 @@
 
       // 创建表体
       data.forEach(row => {
+        
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${row.price}</td>
