@@ -1,277 +1,203 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>币本位与U本位滚仓收益计算器</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: linear-gradient(to right, #A8DADC, #457B9D);
-      color: #1D3557;
-    }
-
-    h1 {
-      text-align: center;
-      padding: 20px 0;
-      color: #1D3557;
-      background-color: #F1FAEE;
-      margin-bottom: 20px;
-    }
-
-    form {
-      max-width: 600px;
-      margin: 20px auto;
-      background: #F1FAEE;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    label {
-      display: block;
-      margin: 10px 0 5px;
-      font-size: 16px;
-      color: #1D3557;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 15px;
-      border: 1px solid #A8DADC;
-      border-radius: 5px;
-      font-size: 16px;
-      background: #F1FAEE;
-    }
-
-    input:focus, select:focus {
-      outline: none;
-      box-shadow: 0 0 5px #A8DADC;
-    }
-
-    button {
-      width: 100%;
-      padding: 10px;
-      background: #1D3557;
-      border: none;
-      border-radius: 5px;
-      font-size: 18px;
-      font-weight: bold;
-      color: #F1FAEE;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-
-    button:hover {
-      background: #457B9D;
-    }
-
-    h2 {
-      text-align: center;
-      margin-top: 20px;
-      color: #1D3557;
-    }
-
-    .table-container {
-      max-width: 800px;
-      margin: 20px auto;
-      background: #F1FAEE;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 10px 0;
-    }
-
-    th, td {
-      border: 1px solid #A8DADC;
-      padding: 10px;
-      text-align: center;
-    }
-
-    th {
-      background: #A8DADC;
-      color: #1D3557;
-    }
-
-    td {
-      color: #1D3557;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>滚仓收益计算</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 400px;
+            text-align: center;
+        }
+        h1 {
+            color: #4CAF50;
+            font-size: 24px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-size: 14px;
+            color: #555;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+            font-size: 16px;
+            color: #333;
+        }
+        input:focus {
+            outline: none;
+            border-color: #4CAF50;
+            background-color: #f1fdf1;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 18px;
+            color: #333;
+        }
+        .footer {
+            margin-top: 40px;
+            font-size: 12px;
+            color: #aaa;
+        }
+    </style>
 </head>
 <body>
-  <h1>币本位与U本位滚仓收益计算器</h1>
-  
-  <form id="calculatorForm">
-    <label for="mode">选择计算模式:</label>
-    <select id="mode">
-      <option value="usdt">U本位 (USD)</option>
-      <option value="crypto">币本位</option>
-    </select>
+    <div class="container">
+        <h1>滚仓收益计算</h1>
 
-    <label for="currency">选择币种: </label>
-    <select id="currency" onchange="fetchCurrentPrice()">
-      <option value="bitcoin">BTC</option>
-      <option value="ethereum">ETH</option>
-      <option value="solana">SOL</option>
-    </select>
+        <label for="mode">选择计算模式:</label>
+        <select id="mode" onchange="toggleMode()">
+            <option value="usdt">U本位 (USDT)</option>
+            <option value="coin">币本位 (币种)</option>
+        </select>
 
-    <label for="currentPrice">当前币种价格 (USD): </label>
-    <input type="text" id="currentPrice" readonly>
+        <div id="usdtMode">
+            <label for="initialCapitalUsdt">初始资金 (USDT): </label>
+            <input type="number" id="initialCapitalUsdt" placeholder="请输入初始资金 (USDT)" required>
+        </div>
 
-    <label for="initialPrice">开仓价格 (USD): </label>
-    <input type="number" id="initialPrice" required>
+        <div id="coinMode" style="display:none;">
+            <label for="initialCapitalCoin">初始资金 (币种数量): </label>
+            <input type="number" id="initialCapitalCoin" placeholder="请输入初始资金 (币种数量)" required>
+            
+            <label for="coinName">币种名称 (如 BTC, ETH): </label>
+            <input type="text" id="coinName" placeholder="请输入币种名称" required>
+        </div>
 
-    <label for="finalPrice">平仓价格 (USD): </label>
-    <input type="number" id="finalPrice" required>
+        <label for="leverage">杠杆倍数: </label>
+        <input type="number" id="leverage" placeholder="请输入杠杆倍数" required>
 
-    <label for="initialCoin">初始持币量: </label>
-    <input type="number" id="initialCoin" required>
+        <label for="openPrice">开仓价格 (USDT): </label>
+        <input type="number" id="openPrice" placeholder="请输入开仓价格" required>
 
-    <label for="leverage">固定杠杆倍数: </label>
-    <input type="number" id="leverage" required>
+        <label for="rolloverPrices">滚仓价格 (逗号分隔): </label>
+        <input type="text" id="rolloverPrices" placeholder="请输入多个滚仓价格，逗号分隔" required>
 
-    <label for="rollingPrices">滚仓价格区间 (可选，逗号分隔): </label>
-    <input type="text" id="rollingPrices" placeholder="例如: 10000,20000,30000">
+        <label for="closePrice">平仓价格 (USDT): </label>
+        <input type="number" id="closePrice" placeholder="请输入平仓价格" required>
 
-    <button type="button" onclick="calculate()">计算收益</button>
-  </form>
-  
-  <h2>收益明细</h2>
-  <div class="table-container" id="tableContainer">
-    <!-- 表格将在这里动态生成 -->
-  </div>
-  
-  <script>
-    async function fetchCurrentPrice() {
-      const currency = document.getElementById("currency").value;
-      try {
-        const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${currency}&vs_currencies=usd`);
-        const data = await response.json();
-        const price = data[currency].usd;
-        document.getElementById("currentPrice").value = price.toFixed(2);
-      } catch (error) {
-        alert("无法获取当前价格，请稍后重试！");
-      }
-    }
+        <button onclick="calculateProfit()">计算收益</button>
 
-    function calculate() {
-      const initialPrice = parseFloat(document.getElementById("initialPrice").value);
-      const finalPrice = parseFloat(document.getElementById("finalPrice").value);
-      const initialCoin = parseFloat(document.getElementById("initialCoin").value);
-      const leverage = parseFloat(document.getElementById("leverage").value);
-      const rollingPricesInput = document.getElementById("rollingPrices").value;
-      const mode = document.getElementById("mode").value;
+        <div id="result"></div>
 
-      if (isNaN(initialPrice) || isNaN(finalPrice) || isNaN(initialCoin) || isNaN(leverage)) {
-        alert("请输入有效的数字！");
-        return;
-      }
+        <div class="footer">
+            <p>© 2024 - 自定义滚仓收益计算器</p>
+        </div>
+    </div>
 
-      let currentCoin = initialCoin;
-      const prices = rollingPricesInput
-        ? rollingPricesInput.split(",").map(Number)
-        : generateDynamicPrices(initialPrice, finalPrice);
-
-      const results = [];
-
-      for (let i = 0; i < prices.length; i++) {
-        const entryPrice = i === 0 ? initialPrice : prices[i - 1];
-        const exitPrice = prices[i];
-        const positionSize = currentCoin * leverage;
-        let profit, totalCapital, totalProfit, profitPercentage;
-
-        if (mode === 'usdt') {
-          // U本位模式：按资金计算盈亏
-          profit = (exitPrice - entryPrice) * positionSize / exitPrice;
-          currentCoin += profit;
-
-          totalCapital = currentCoin * exitPrice;
-          totalProfit = totalCapital - (initialCoin * initialPrice);
-          profitPercentage = (totalProfit / (initialCoin * initialPrice)) * 100;
-        } else {
-          // 币本位模式：按币种计算盈亏
-          profit = (exitPrice - entryPrice) * currentCoin / entryPrice;
-          currentCoin += profit;
-
-          totalCapital = currentCoin;
-          totalProfit = currentCoin - initialCoin;
-          profitPercentage = (totalProfit / initialCoin) * 100;
+    <script>
+        // 切换 U本位 和 币本位 的显示模式
+        function toggleMode() {
+            const mode = document.getElementById('mode').value;
+            if (mode === 'usdt') {
+                document.getElementById('usdtMode').style.display = 'block';
+                document.getElementById('coinMode').style.display = 'none';
+            } else {
+                document.getElementById('usdtMode').style.display = 'none';
+                document.getElementById('coinMode').style.display = 'block';
+            }
         }
 
-        results.push({
-          price: exitPrice,
-          coins: currentCoin.toFixed(6),
-          capital: totalCapital.toFixed(2),
-          profitPercentage: profitPercentage.toFixed(2)
-        });
-      }
+        async function getCoinPrice(coinName) {
+            try {
+                // 获取币安 API 的数据
+                const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${coinName.toUpperCase()}USDT`);
+                const data = await response.json();
+                return parseFloat(data.price);
+            } catch (error) {
+                console.error("获取币种价格失败:", error);
+                alert("获取币种价格失败，请稍后重试！");
+                return null;
+            }
+        }
 
-      generateTable(results);
-    }
+        async function calculateProfit() {
+            const mode = document.getElementById('mode').value;
+            let initialCapital, initialCoinAmount;
 
-    function generateDynamicPrices(start, end) {
-      const prices = [];
-      for (let price = getNextStep(start); price <= end; price += getStep(price)) {
-        prices.push(price);
-      }
-      return prices;
-    }
+            // 根据选择的模式获取初始资金或币种数量
+            if (mode === 'usdt') {
+                initialCapital = parseFloat(document.getElementById('initialCapitalUsdt').value);
+            } else {
+                initialCoinAmount = parseFloat(document.getElementById('initialCapitalCoin').value);
+                const coinName = document.getElementById('coinName').value;
+                // 获取币种的价格
+                const coinPrice = await getCoinPrice(coinName);
+                if (!coinPrice) return; // 如果无法获取价格则中断计算
+                initialCapital = initialCoinAmount * coinPrice; // 计算对应的USDT金额
+            }
 
-    function getStep(price) {
-      if (price < 1000) return 100;
-      if (price < 10000) return 1000;
-      return 10000;
-    }
+            const leverage = parseFloat(document.getElementById('leverage').value);
+            const openPrice = parseFloat(document.getElementById('openPrice').value);
+            const rolloverPrices = document.getElementById('rolloverPrices').value.split(',').map(price => parseFloat(price.trim()));
+            const closePrice = parseFloat(document.getElementById('closePrice').value);
 
-    function getNextStep(price) {
-      const step = getStep(price);
-      return Math.ceil(price / step) * step;
-    }
+            // 检查输入是否有效
+            if (isNaN(initialCapital) || isNaN(leverage) || isNaN(openPrice) || isNaN(closePrice) || rolloverPrices.some(isNaN)) {
+                alert("请输入有效的数字！");
+                return;
+            }
 
-    function generateTable(data) {
-      const container = document.getElementById("tableContainer");
-      container.innerHTML = ""; // 清空旧表格
+            let capital = initialCapital;
+            let entryPrice = openPrice;
 
-      const table = document.createElement("table");
-      const thead = document.createElement("thead");
-      const tbody = document.createElement("tbody");
+            // 计算开仓到第一个滚仓的收益
+            rolloverPrices.forEach((price, index) => {
+                const position = (capital * leverage) / entryPrice; // 当前仓位
+                const profit = (price - entryPrice) * position; // 当前滚仓的收益
+                capital += profit; // 更新资金
+                entryPrice = price; // 更新开仓价格
 
-      // 创建表头
-      thead.innerHTML = `
-        <tr>
-          <th>价格 (USD)</th>
-          <th>持币量</th>
-          <th>总资产 (USD)</th>
-          <th>收益率 (%)</th>
-        </tr>
-      `;
+                // 打印每次滚仓后的资金和开仓价格
+                console.log(`滚仓 ${index + 1}: 资金 = ${capital.toFixed(2)} USDT, 开仓价格 = ${entryPrice}`);
+            });
 
-      // 创建表体
-      data.forEach(row => {
-        
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${row.price}</td>
-          <td>${row.coins}</td>
-          <td>${row.capital}</td>
-          <td>${row.profitPercentage}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+            // 最后计算平仓的收益
+            const positionAfterRollover = (capital * leverage) / entryPrice;
+            const finalProfit = (closePrice - entryPrice) * positionAfterRollover;
+            capital += finalProfit;
 
-      table.appendChild(thead);
-      table.appendChild(tbody);
-      container.appendChild(table);
-    }
-  </script>
+            // 显示结果
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <p>最终资产: ${capital.toFixed(2)} USDT</p>
+                <p>总收益: ${(capital - initialCapital).toFixed(2)} USDT</p>
+            `;
+        }
+    </script>
 </body>
 </html>
