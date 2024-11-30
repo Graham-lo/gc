@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>币本位与U本位滚仓收益计算器</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to right, #A8DADC, #457B9D);
+      color: #1D3557;
+    }
+
+    h1 {
+      text-align: center;
+      padding: 20px 0;
+      color: #1D3557;
+      background-color: #F1FAEE;
+      margin-bottom: 20px;
+    }
+
+    form {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #F1FAEE;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    label {
+      display: block;
+      margin: 10px 0 5px;
+      font-size: 16px;
+      color: #1D3557;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #A8DADC;
+      border-radius: 5px;
+      font-size: 16px;
+      background: #F1FAEE;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      box-shadow: 0 0 5px #A8DADC;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #1D3557;
+      border: none;
+      border-radius: 5px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #F1FAEE;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #457B9D;
+    }
+
+    h2 {
+      text-align: center;
+      margin-top: 20px;
+      color: #1D3557;
+    }
+
+    .table-container {
+      max-width: 800px;
+      margin: 20px auto;
+      background: #F1FAEE;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+    }
+
+    th, td {
+      border: 1px solid #A8DADC;
+      padding: 10px;
+      text-align: center;
+    }
+
+    th {
+      background: #A8DADC;
+      color: #1D3557;
+    }
+
+    td {
+      color: #1D3557;
+    }
+  </style>
+</head>
+<body>
+  <h1>币本位与U本位滚仓收益计算器</h1>
+  
+  <form id="calculatorForm">
+    <label for="currency">选择币种: </label>
+    <select id="currency" onchange="fetchCurrentPrice()">
+      <option value="bitcoin">BTC</option>
+      <option value="ethereum">ETH</option>
+      <option value="solana">SOL</option>
+    </select>
+
+    <label for="currentPrice">当前币种价格 (USD): </label>
+    <input type="text" id="currentPrice" readonly>
+
+    <label for="initialPrice">开仓价格 (USD): </label>
+    <input type="number" id="initialPrice" required>
+
+    <label for="finalPrice">平仓价格 (USD): </label>
+    <input type="number" id="finalPrice" required>
+
+    <label for="initialCoin">初始持币量: </label>
+    <input type="number" id="initialCoin" required>
+
+    <label for="leverage">固定杠杆倍数: </label>
+    <input type="number" id="leverage" required>
+
+    <label for="rollingPrices">滚仓价格区间 (可选，逗号分隔): </label>
+    <input type="text" id="rollingPrices" placeholder="例如: 10000,20000,30000">
+
+    <label for="mode">计算模式:</label>
+    <select id="mode">
+      <option value="usdt">U本位 (USD)</option>
+      <option value="crypto">币本位</option>
+    </select>
+
+    <button type="button" onclick="calculate()">计算收益</button>
+  </form>
+  
+  <h2>收益明细</h2>
+  <div class="table-container" id="tableContainer">
+    <!-- 表格将在这里动态生成 -->
+  </div>
+  
+  <script>
+    async function fetchCurrentPrice() {
+      const currency = document.getElementById("currency").value;
+      try {
+        const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${currency}&vs_currencies=usd`);
+        const data = await response.json();
+        const price = data[currency].usd;
+        document.getElementById("currentPrice").value = price.toFixed(2);
+      } catch (error) {
+        alert("无法获取当前价格，请稍后重试！");
+      }
+    }
+
+    function calculate() {
+      const initialPrice = parseFloat(document.getElementById("initialPrice").value);
+      const finalPrice = parseFloat(document.getElementById("finalPrice").value);
+      const initialCoin = parseFloat(document.getElementById("initialCoin").value);
+      const leverage = parseFloat(document.getElementById("leverage").value);
+      const rollingPricesInput = document.getElementById("rollingPrices").value;
+      const mode = document.getElementById("mode").value;
+
+      if (isNaN(initialPrice) || isNaN(finalPrice) || isNaN(initialCoin) || isNaN(leverage)) {
+        alert("请输入有效的数字！");
+        return;
+      }
+
+      let currentCoin = initialCoin;
+      const prices = rollingPricesInput
+        ? rollingPricesInput.split(",").map(Number)
+        : generateDynamicPrices(initialPrice, finalPrice);
+
+      const results = [];
+
+      for (let i = 0; i < prices.length; i++) {
+        const entryPrice = i === 0 ? initialPrice : prices[i - 1];
+        const exitPrice = prices[i];
+        const positionSize = currentCoin * leverage;
+        let profit, totalCapital, totalProfit, profitPercentage;
+
+        if (mode === 'usdt') {
+          // U本位模式：按资金计算盈亏
+          profit = (exitPrice - entryPrice) * positionSize / exitPrice;
+          currentCoin += profit;
+
+          totalCapital = currentCoin * exitPrice;
+          totalProfit = totalCapital - (initialCoin * initialPrice);
+          profitPercentage = (totalProfit / (initialCoin * initialPrice)) * 100;
+        } else {
+          // 币本位模式：按币种计算盈亏
+          profit = (exitPrice - entryPrice) * currentCoin / entryPrice;
+          currentCoin += profit;
+
+          totalCapital = currentCoin;
+          totalProfit = currentCoin - initialCoin;
+          profitPercentage = (totalProfit / initialCoin) * 100;
+        }
+
+        results.push({
+          price: exitPrice,
+          coins: currentCoin.toFixed(6),
+          capital: totalCapital.toFixed(2),
+          profitPercentage: profitPercentage.toFixed(2)
+        });
+      }
+
+      generateTable(results);
+    }
+
+    function generateDynamicPrices(start, end) {
+      const prices = [];
+      for (let price = getNextStep(start); price <= end; price += getStep(price)) {
+        prices.push(price);
+      }
+      return prices;
+    }
+
+    function getStep(price) {
+      if (price < 1000) return 100;
+      if (price < 10000) return 1000;
+      return 10000;
+    }
+
+    function getNextStep(price
+    function getNextStep(price) {
+      const step = getStep(price);
+      return Math.ceil(price / step) * step;
+    }
+
+    function generateTable(data) {
+      const container = document.getElementById("tableContainer");
+      container.innerHTML = ""; // 清空旧表格
+
+      const table = document.createElement("table");
+      const thead = document.createElement("thead");
+      const tbody = document.createElement("tbody");
+
+      // 创建表头
+      thead.innerHTML = `
+        <tr>
+          <th>价格 (USD)</th>
+          <th>持币量</th>
+          <th>总资产 (USD)</th>
+          <th>收益率 (%)</th>
+        </tr>
+      `;
+
+      // 创建表体
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${row.price}</td>
+          <td>${row.coins}</td>
+          <td>${row.capital}</td>
+          <td>${row.profitPercentage}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      table.appendChild(thead);
+      table.appendChild(tbody);
+      container.appendChild(table);
+    }
+  </script>
+</body>
+</html>
