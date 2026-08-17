@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"/>
+  <meta name="theme-color" content="#081d18"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="炸金花"/>
+  <title>炸金花 · 真人牌局</title>
+  <link rel="manifest" href="manifest.webmanifest"/>
+  <link rel="icon" href="icon.svg"/>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <div id="app">
+    <section id="homeScreen" class="screen home-screen">
+      <div class="hero-mark">♠</div>
+      <h1>炸金花</h1>
+      <p class="subtitle">真人房间 · 2–7 人 · 空位可加入 AI</p>
+      <div id="setupWarning" class="setup-warning hidden"></div>
+      <div class="home-card">
+        <label>你的昵称</label>
+        <input id="nameInput" maxlength="12" placeholder="输入昵称" autocomplete="nickname"/>
+        <button id="createBtn" class="big-btn gold">创建房间</button>
+        <div class="divider"><span>或者</span></div>
+        <label>房间码</label>
+        <div class="join-row">
+          <input id="roomInput" maxlength="6" placeholder="6 位房间码" autocapitalize="characters"/>
+          <button id="joinBtn" class="big-btn">加入</button>
+        </div>
+      </div>
+      <p class="legal">无限娱乐积分 · 不充值 · 不提现 · 不兑换 · 不与现金或实物挂钩</p>
+    </section>
+
+    <section id="lobbyScreen" class="screen hidden">
+      <header class="topbar">
+        <button class="icon-btn" id="leaveLobbyBtn">‹</button>
+        <div><div class="title-small">等待开局</div><div class="room-code">房间 <b id="lobbyCode"></b></div></div>
+        <button class="share-btn" id="shareBtn">邀请</button>
+      </header>
+      <main class="lobby-main">
+        <div class="invite-card">
+          <div><span>房间码</span><strong id="inviteCode"></strong></div>
+          <button id="copyCodeBtn">复制</button>
+        </div>
+        <div class="seat-list" id="lobbySeats"></div>
+        <div id="hostLobbyControls" class="host-controls hidden">
+          <div class="host-row">
+            <button id="addBotBtn">+ AI</button>
+            <button id="fillBotsBtn">补满 AI</button>
+            <button id="resetScoresBtn">战绩清零</button>
+          </div>
+          <button id="startBtn" class="big-btn gold">开始游戏</button>
+        </div>
+        <div id="guestWaiting" class="waiting-note hidden">等待房主开始游戏…</div>
+      </main>
+    </section>
+
+    <section id="gameScreen" class="screen game-screen hidden">
+      <header class="game-topbar">
+        <button class="icon-btn" id="gameBackBtn">‹</button>
+        <div class="game-title"><b>炸金花</b><span id="gameRoomCode"></span></div>
+        <div class="net" id="netState"><i></i><span>在线</span></div>
+      </header>
+      <div class="table-zone">
+        <div class="poker-table" id="pokerTable">
+          <div class="pot-center">
+            <span>本局积分池</span>
+            <strong id="potValue">0</strong>
+            <em>当前基础分 <b id="betValue">10</b></em>
+            <div class="chips"><i></i><i></i><i></i><i></i></div>
+          </div>
+          <div id="seatLayer"></div>
+          <div class="status-pill" id="roundPill">第 1 轮</div>
+        </div>
+        <div class="my-hand-panel">
+          <div class="my-cards" id="myCards"></div>
+          <div class="my-hand-name" id="myHandName">未看牌</div>
+        </div>
+      </div>
+      <div class="action-panel">
+        <div class="turn-line"><span id="turnText">等待操作</span><b id="countdown"></b></div>
+        <div class="action-grid">
+          <button id="peekBtn" class="act secondary">看牌</button>
+          <button id="callBtn" class="act gold">跟注</button>
+          <button id="raiseBtn" class="act secondary">加注</button>
+          <button id="compareBtn" class="act secondary">比牌</button>
+          <button id="foldBtn" class="act danger">弃牌</button>
+        </div>
+      </div>
+    </section>
+
+    <div id="compareSheet" class="sheet-backdrop hidden">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <h3>选择比牌对象</h3>
+        <div id="compareTargets" class="target-list"></div>
+        <button id="cancelCompareBtn" class="wide-ghost">取消</button>
+      </div>
+    </div>
+
+    <div id="resultSheet" class="sheet-backdrop hidden">
+      <div class="sheet result-sheet">
+        <div class="result-icon">♠</div>
+        <h2 id="resultTitle">本局结束</h2>
+        <div id="resultSummary"></div>
+        <div id="showdownList" class="showdown-list"></div>
+        <button id="nextHandBtn" class="big-btn gold hidden">下一局</button>
+        <div id="waitNextText" class="waiting-note hidden">等待房主开始下一局…</div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+  </div>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
