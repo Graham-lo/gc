@@ -1,0 +1,11 @@
+{
+  "name": "炸金花 · 真人牌局",
+  "short_name": "炸金花",
+  "description": "2–7 人真人炸金花，空位可加入 AI。无限娱乐积分，无充值、提现或兑换。",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#06110e",
+  "theme_color": "#081d18",
+  "orientation": "portrait-primary",
+  "icons": [{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}
